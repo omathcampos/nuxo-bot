@@ -7,7 +7,7 @@
 
 | # | Tarefa | Status | Branch |
 |---|--------|--------|--------|
-| 1 | Restaurar projeto Supabase + migrations + seed | ⏳ Pendente | `feat/supabase-setup` |
+| 1 | Restaurar projeto Supabase + migrations + seed | ✅ Concluído | `feat/supabase-setup` |
 | 2 | Scaffold do projeto TypeScript | ⏳ Pendente | `feat/scaffold` |
 | 3 | Infraestrutura base (db client, env, bot setup) | ⏳ Pendente | `feat/infra-base` |
 | 4 | Auth middleware + comando /start | ⏳ Pendente | `feat/auth-start` |
