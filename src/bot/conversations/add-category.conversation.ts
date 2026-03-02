@@ -5,7 +5,7 @@ export async function addCategoryConversation(
   conversation: BotConversation,
   ctx: BotContext,
 ) {
-  const userId = ctx.session.dbUserId!
+  const userId = await conversation.external((outerCtx) => outerCtx.session.dbUserId!)
 
   await ctx.reply('Nome da nova categoria?')
   const nameCtx = await conversation.wait()
