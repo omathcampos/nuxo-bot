@@ -10,14 +10,19 @@ import {
   expenseNoopCallback,
 } from './expense.callbacks'
 import { monthCommand } from '../commands/month.command'
-import { addCommand } from '../commands/add.command'
 import { ExpenseService } from '../../services/expense.service'
 import { parseBillingDate, formatMonthYear } from '../../utils/date.utils'
 
 export function registerCallbacks(bot: Bot<BotContext>) {
   // Menu principal
-  bot.callbackQuery('menu:add',   (ctx) => { ctx.answerCallbackQuery(); return addCommand(ctx) })
-  bot.callbackQuery('menu:month', (ctx) => { ctx.answerCallbackQuery(); return monthCommand(ctx) })
+  bot.callbackQuery('menu:add', async (ctx) => {
+    await ctx.answerCallbackQuery()
+    await ctx.conversation.enter('add-expense')
+  })
+  bot.callbackQuery('menu:month', async (ctx) => {
+    await ctx.answerCallbackQuery()
+    await monthCommand(ctx)
+  })
   bot.callbackQuery('menu:categories', async (ctx) => {
     await ctx.answerCallbackQuery()
     await ctx.conversation.enter('add-category')
