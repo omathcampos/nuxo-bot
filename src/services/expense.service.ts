@@ -8,6 +8,10 @@ import {
 import { toFirstOfMonth, currentMonthStart } from '../utils/date.utils'
 
 export const ExpenseService = {
+  async findById(expenseId: number, userId: number) {
+    return ExpenseRepository.findById(expenseId, userId)
+  },
+
   async getCategoriesForUser(userId: number) {
     return CategoryRepository.findAllForUser(userId)
   },
