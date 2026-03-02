@@ -9,12 +9,12 @@
 |---|--------|--------|--------|
 | 1 | Restaurar projeto Supabase + migrations + seed | ✅ Concluído | `feat/supabase-setup` |
 | 2 | Scaffold do projeto TypeScript | ✅ Concluído | `feat/scaffold` |
-| 3 | Infraestrutura base (db client, env, bot setup) | ⏳ Pendente | `feat/infra-base` |
-| 4 | Auth middleware + comando /start | ⏳ Pendente | `feat/auth-start` |
-| 5 | Registro de gastos (conversa multi-step) | ⏳ Pendente | `feat/add-expense` |
-| 6 | Consulta de gastos por mês | ⏳ Pendente | `feat/monthly-query` |
-| 7 | Gerenciamento de gastos (excluir / cancelar) | ⏳ Pendente | `feat/expense-management` |
-| 8 | Gerenciamento de categorias | ⏳ Pendente | `feat/categories` |
+| 3 | Infraestrutura base (db client, env, bot setup) | ✅ Concluído | `feat/scaffold` |
+| 4 | Auth middleware + comando /start | ✅ Concluído | `feat/scaffold` |
+| 5 | Registro de gastos (conversa multi-step) | ✅ Concluído | `feat/scaffold` |
+| 6 | Consulta de gastos por mês | ✅ Concluído | `feat/scaffold` |
+| 7 | Gerenciamento de gastos (excluir / cancelar) | ✅ Concluído | `feat/expense-management` |
+| 8 | Gerenciamento de categorias | ✅ Concluído | `feat/scaffold` |
 | 9 | Deploy no Railway + webhook | ⏳ Pendente | `feat/railway-deploy` |
 
 **Legenda:** ✅ Concluído · 🔄 Em andamento · ⏳ Pendente · ❌ Bloqueado
