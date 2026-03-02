@@ -12,7 +12,7 @@ export async function addExpenseConversation(
   conversation: BotConversation,
   ctx: BotContext,
 ) {
-  const userId = ctx.session.dbUserId!
+  const userId = await conversation.external((outerCtx) => outerCtx.session.dbUserId!)
 
   // PASSO 1: Valor
   await ctx.reply('Qual o valor total? (ex: 150,00)')
