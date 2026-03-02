@@ -66,4 +66,24 @@ export const ExpenseRepository = {
       .eq('id', id)
       .eq('user_id', userId)
   },
+
+  // Retorna recorrentes ativos (sem cancelamento ou cancelamento no futuro)
+  async findActiveRecurring(userId: number) {
+    const today = new Date().toISOString().slice(0, 10)
+    const { data } = await supabase
+      .from('expenses')
+      .select('*, categories(name, icon)')
+      .eq('user_id', userId)
+      .eq('charge_type', 'recurring')
+      .or(`cancelled_at.is.null,cancelled_at.gt.${today}`)
+      .order('billing_start_date', { ascending: true })
+    return (data ?? []) as Array<{
+      id: number
+      description: string | null
+      total_amount: number
+      billing_start_date: string
+      cancelled_at: string | null
+      categories: { name: string; icon: string | null } | null
+    }>
+  },
 }

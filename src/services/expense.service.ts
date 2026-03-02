@@ -56,6 +56,19 @@ export const ExpenseService = {
   async cancelRecurring(expenseId: number, userId: number, cancelFromDate: Date) {
     await ExpenseRepository.cancelRecurring(expenseId, userId, toFirstOfMonth(cancelFromDate))
   },
+
+  async getActiveRecurring(userId: number) {
+    return ExpenseRepository.findActiveRecurring(userId)
+  },
+
+  async getYearlySummary(userId: number, year: number): Promise<{ month: number; total: number }[]> {
+    const results = await Promise.all(
+      Array.from({ length: 12 }, (_, i) =>
+        ExpenseService.getMonthlySummary(userId, year, i + 1),
+      ),
+    )
+    return results.map((summary, i) => ({ month: i + 1, total: summary.grandTotal }))
+  },
 }
 
 function buildSummary(rows: MonthlyExpenseRow[]): MonthlyExpenseSummary {
