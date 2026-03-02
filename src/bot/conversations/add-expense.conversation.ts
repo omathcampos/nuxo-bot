@@ -23,15 +23,24 @@ export async function addExpenseConversation(
     return
   }
 
-  // PASSO 2: Tipo de cobrança
-  await ctx.reply('Como é essa cobrança?', { reply_markup: expenseTypeKeyboard() })
-  const typeCtx = await conversation.waitForCallbackQuery(
-    ['type:one_time', 'type:installment', 'type:recurring'],
+  // PASSO 2: Forma de pagamento
+  await ctx.reply('Forma de pagamento?', { reply_markup: paymentMethodKeyboard() })
+  const payCtx = await conversation.waitForCallbackQuery(
+    ['pay:credit_card', 'pay:debit_card', 'pay:pix', 'pay:cash'],
   )
+  await payCtx.answerCallbackQuery()
+  const paymentMethod = payCtx.callbackQuery.data.split(':')[1] as PaymentMethod
+
+  // PASSO 3: Tipo de cobrança (parcelado só disponível para crédito)
+  await ctx.reply('Como é essa cobrança?', { reply_markup: expenseTypeKeyboard(paymentMethod) })
+  const allowedTypes = paymentMethod === 'credit_card'
+    ? ['type:one_time', 'type:installment', 'type:recurring']
+    : ['type:one_time', 'type:recurring']
+  const typeCtx = await conversation.waitForCallbackQuery(allowedTypes)
   await typeCtx.answerCallbackQuery()
   const chargeType = typeCtx.callbackQuery.data.split(':')[1] as ChargeType
 
-  // PASSO 3: Parcelas (apenas para installment)
+  // PASSO 4: Parcelas (apenas para installment)
   let installmentsTotal: number | undefined
 
   if (chargeType === 'installment') {
@@ -45,14 +54,6 @@ export async function addExpenseConversation(
     installmentsTotal = n
     await ctx.reply(`${n}x de R$ ${(totalAmount / n).toFixed(2).replace('.', ',')}`)
   }
-
-  // PASSO 4: Forma de pagamento
-  await ctx.reply('Forma de pagamento?', { reply_markup: paymentMethodKeyboard(chargeType) })
-  const payCtx = await conversation.waitForCallbackQuery(
-    ['pay:credit_card', 'pay:debit_card', 'pay:pix', 'pay:cash'],
-  )
-  await payCtx.answerCallbackQuery()
-  const paymentMethod = payCtx.callbackQuery.data.split(':')[1] as PaymentMethod
 
   // PASSO 5: Data de início
   await ctx.reply('Mês de início da cobrança? (ex: 03/2025 ou *hoje*)', { parse_mode: 'Markdown' })
