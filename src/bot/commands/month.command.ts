@@ -1,8 +1,8 @@
+import { InlineKeyboard } from 'grammy'
 import { BotContext } from '../../types/bot.types'
 import { ExpenseService } from '../../services/expense.service'
-import { formatBRL as _formatBRL } from '../../utils/format.utils'
+import { formatBRL } from '../../utils/format.utils'
 import { formatMonthLabel } from '../../utils/date.utils'
-import { InlineKeyboard } from 'grammy'
 
 export async function monthCommand(ctx: BotContext, year?: number, month?: number) {
   const now = new Date()
@@ -13,34 +13,45 @@ export async function monthCommand(ctx: BotContext, year?: number, month?: numbe
   const summary = await ExpenseService.getMonthlySummary(userId, y, m)
 
   const lines: string[] = [`📅 *${formatMonthLabel(y, m)}*\n`]
+  const kb = new InlineKeyboard()
 
   if (Object.keys(summary.byCategory).length === 0) {
     lines.push('Nenhum gasto registrado neste mês.')
   } else {
     for (const [catName, data] of Object.entries(summary.byCategory)) {
-      const icon = data.icon ?? '📦'
-      lines.push(`${icon} *${catName}* — ${_formatBRL(data.total)}`)
+      lines.push(`${data.icon ?? '📦'} *${catName}* — ${formatBRL(data.total)}`)
+
       for (const item of data.items) {
         const desc  = item.description ?? catName
-        const value = _formatBRL(item.amount)
+        const value = formatBRL(item.amount)
         const parc  = item.installmentNumber
-          ? ` (${item.installmentNumber}/${item.installmentsTotal})`
+          ? ` _(${item.installmentNumber}/${item.installmentsTotal})_`
           : item.chargeType === 'recurring' ? ' 🔄' : ''
+
         lines.push(`  • ${desc}${parc} — ${value}`)
+
+        // Botão de ação por gasto
+        const action = item.chargeType === 'recurring' ? 'cancel' : 'delete'
+        const label  = item.chargeType === 'recurring' ? `❌ ${desc}` : `🗑 ${desc}`
+        kb.text(label, `expense:${action}:${item.expenseId}`).row()
       }
       lines.push('')
     }
-    lines.push(`*Total: ${_formatBRL(summary.grandTotal)}*`)
+    lines.push(`*Total: ${formatBRL(summary.grandTotal)}*`)
   }
 
   // Navegação entre meses
-  const prevDate = new Date(y, m - 2, 1)
-  const nextDate = new Date(y, m, 1)
-  const navKb = new InlineKeyboard()
-    .text(`◀ ${formatMonthLabel(prevDate.getFullYear(), prevDate.getMonth() + 1).split(' ')[0]}`,
-          `month:nav:${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`)
-    .text(`${formatMonthLabel(nextDate.getFullYear(), nextDate.getMonth() + 1).split(' ')[0]} ▶`,
-          `month:nav:${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`)
+  const prev = new Date(y, m - 2, 1)
+  const next = new Date(y, m, 1)
+  kb
+    .text(
+      `◀ ${formatMonthLabel(prev.getFullYear(), prev.getMonth() + 1).split(' de ')[0]}`,
+      `month:nav:${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`,
+    )
+    .text(
+      `${formatMonthLabel(next.getFullYear(), next.getMonth() + 1).split(' de ')[0]} ▶`,
+      `month:nav:${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`,
+    )
 
-  await ctx.reply(lines.join('\n'), { parse_mode: 'Markdown', reply_markup: navKb })
+  await ctx.reply(lines.join('\n'), { parse_mode: 'Markdown', reply_markup: kb })
 }

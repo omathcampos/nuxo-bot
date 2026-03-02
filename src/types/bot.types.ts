@@ -3,6 +3,7 @@ import { ConversationFlavor, Conversation } from '@grammyjs/conversations'
 
 export interface SessionData {
   dbUserId: number | null
+  _pendingCancelExpenseId?: number
 }
 
 // BaseContext: contexto sem o flavor de conversations
