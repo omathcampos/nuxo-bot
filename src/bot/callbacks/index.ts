@@ -1,6 +1,13 @@
 import { Bot } from 'grammy'
 import { BotContext } from '../../types/bot.types'
-import { monthNavCallback } from './month.callbacks'
+import {
+  monthNavCallback,
+  monthManageCallback,
+  monthFilterCallback,
+  monthFilterTypeCallback,
+  monthFilterCatCallback,
+  monthFilterClearCallback,
+} from './month.callbacks'
 import {
   expenseDeleteCallback,
   expenseDeleteConfirmCallback,
@@ -10,6 +17,8 @@ import {
   expenseNoopCallback,
 } from './expense.callbacks'
 import { monthCommand } from '../commands/month.command'
+import { recurringCommand } from '../commands/recurring.command'
+import { yearCommand } from '../commands/year.command'
 import { ExpenseService } from '../../services/expense.service'
 import { parseBillingDate, formatMonthYear } from '../../utils/date.utils'
 
@@ -23,6 +32,14 @@ export function registerCallbacks(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery()
     await monthCommand(ctx)
   })
+  bot.callbackQuery('menu:recurring', async (ctx) => {
+    await ctx.answerCallbackQuery()
+    await recurringCommand(ctx)
+  })
+  bot.callbackQuery('menu:year', async (ctx) => {
+    await ctx.answerCallbackQuery()
+    await yearCommand(ctx)
+  })
   bot.callbackQuery('menu:categories', async (ctx) => {
     await ctx.answerCallbackQuery()
     await ctx.conversation.enter('add-category')
@@ -30,6 +47,15 @@ export function registerCallbacks(bot: Bot<BotContext>) {
 
   // Navegação de meses
   bot.callbackQuery(/^month:nav:\d{4}-\d{2}$/, monthNavCallback)
+
+  // Gerenciar gastos do mês
+  bot.callbackQuery(/^month:manage:\d{4}-\d{2}$/, monthManageCallback)
+
+  // Filtros mensais
+  bot.callbackQuery(/^month:filter:\d{4}-\d{2}$/, monthFilterCallback)
+  bot.callbackQuery(/^month:ftype:\d{4}-\d{2}:[a-z_]+$/, monthFilterTypeCallback)
+  bot.callbackQuery(/^month:fcat:\d{4}-\d{2}:.+$/, monthFilterCatCallback)
+  bot.callbackQuery(/^month:fclear:\d{4}-\d{2}$/, monthFilterClearCallback)
 
   // Exclusão de gastos
   bot.callbackQuery(/^expense:delete:\d+$/, expenseDeleteCallback)

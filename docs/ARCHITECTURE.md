@@ -11,6 +11,7 @@
 | Servidor HTTP | Express (para receber webhook) |
 | Deploy | Railway (webhook mode) |
 | Dev | tsx (hot-reload sem build) |
+| Testes | Vitest |
 
 ---
 
@@ -29,18 +30,20 @@ nuxo-bot/
 │   │   │   └── error.middleware.ts       # Handler global de erros
 │   │   ├── commands/
 │   │   │   ├── index.ts                 # Registra todos os commands
-│   │   │   ├── start.command.ts         # /start — boas vindas + upsert usuário
+│   │   │   ├── start.command.ts         # /start — boas vindas + menu
 │   │   │   ├── add.command.ts           # /add — inicia conversa de registro
-│   │   │   └── month.command.ts         # /month — gastos do mês
+│   │   │   ├── month.command.ts         # /month — gastos do mês (com filtros)
+│   │   │   ├── recurring.command.ts     # /recurring — recorrentes ativos
+│   │   │   └── year.command.ts          # /year — resumo anual
 │   │   ├── conversations/
 │   │   │   ├── add-expense.conversation.ts  # Fluxo multi-step de registro
 │   │   │   └── add-category.conversation.ts # Fluxo de nova categoria
 │   │   ├── callbacks/
 │   │   │   ├── index.ts                 # Registra todos os callbacks
-│   │   │   ├── expense.callbacks.ts     # Detalhes, excluir, cancelar recorrente
-│   │   │   └── month.callbacks.ts       # Navegação de meses, filtros
+│   │   │   ├── expense.callbacks.ts     # Excluir, cancelar recorrente
+│   │   │   └── month.callbacks.ts       # Navegação, gerenciar, filtros
 │   │   └── keyboards/
-│   │       ├── expense-type.keyboard.ts
+│   │       ├── expense-type.keyboard.ts  # Condicionado ao paymentMethod
 │   │       ├── payment-method.keyboard.ts
 │   │       └── categories.keyboard.ts
 │   ├── services/
@@ -59,16 +62,17 @@ nuxo-bot/
 │   ├── types/
 │   │   ├── expense.types.ts
 │   │   ├── category.types.ts
-│   │   └── bot.types.ts                 # BotContext customizado
+│   │   └── bot.types.ts                 # BotContext + SessionData
 │   └── utils/
-│       ├── date.utils.ts                # Normalizar datas para 1º do mês
-│       ├── format.utils.ts              # Formatação BRL, datas PT-BR
-│       └── validation.utils.ts          # Parsear inputs do usuário
+│       ├── date.utils.ts
+│       ├── format.utils.ts
+│       └── validation.utils.ts
 ├── supabase/
-│   └── migrations/                      # Arquivos SQL versionados
+│   └── migrations/
 ├── .env.example
 ├── package.json
 ├── tsconfig.json
+├── vitest.config.ts
 ├── railway.toml
 └── .gitignore
 ```
@@ -200,9 +204,15 @@ $$ LANGUAGE plpgsql;
 ### Contexto do Grammy
 ```typescript
 // src/types/bot.types.ts
-type SessionData = { dbUserId: number | null }
-export type BotContext = Context & SessionFlavor<SessionData> & ConversationFlavor
+export interface SessionData {
+  dbUserId: number | null
+  _pendingCancelExpenseId?: number
+  _monthFilter?: { chargeType?: ChargeType; categoryName?: string }
+}
+export type BotContext = ConversationFlavor<Context & SessionFlavor<SessionData>>
 ```
+
+O campo `_monthFilter` é armazenado na sessão (Supabase) e aplicado client-side sobre o resultado de `getMonthlySummary` ao renderizar a tela mensal.
 
 ### Ordem dos middlewares (crítico)
 ```
@@ -212,10 +222,53 @@ session → conversations → auth → commands/callbacks
 ### Conversations
 Side-effects de banco dentro de `conversation.external()` para evitar dupla execução em caso de replay.
 
-### Callbacks — padrão de nomenclatura
+### Fluxo de registro de gastos (ordem dos passos)
 ```
-expense:detail:123 | expense:delete:123 | expense:cancel:123
-month:nav:2025-04  | month:filter:5
+1. Valor
+2. Forma de pagamento  ← define se Parcelado estará disponível no passo 3
+3. Tipo de cobrança    ← "Parcelado" só aparece se pagamento = crédito
+4. Parcelas            ← apenas se installment
+5. Data de início
+6. Categoria
+7. Descrição (opcional)
+```
+
+### Callbacks — padrão de nomenclatura
+
+```
+expense:delete:<id>
+expense:delete:confirm:(all|future):<id>
+expense:cancel:<id>
+expense:cancel:confirm:<id>:<MM/YYYY>
+expense:cancel:custom:<id>
+expense:noop
+
+month:nav:<YYYY-MM>
+month:manage:<YYYY-MM>
+month:filter:<YYYY-MM>
+month:ftype:<YYYY-MM>:<chargeType>
+month:fcat:<YYYY-MM>:<categoryName>
+month:fclear:<YYYY-MM>
+
+menu:add | menu:month | menu:recurring | menu:year | menu:categories
+```
+
+---
+
+## Testes
+
+**Framework:** Vitest (TypeScript nativo)
+
+| Arquivo de teste | Cobertura |
+|---|---|
+| `src/utils/date.utils.test.ts` | `parseBillingDate`, `formatMonthYear`, `formatMonthLabel`, `addMonths`, `toFirstOfMonth` |
+| `src/utils/format.utils.test.ts` | `parseAmount`, `formatInstallment`, `formatBRL` |
+| `src/utils/validation.utils.test.ts` | `parseInstallments` |
+| `src/services/expense.service.test.ts` | `getMonthlySummary`/`buildSummary`, `deleteExpense`, `cancelRecurring` |
+
+```bash
+npm test           # 72 testes, todos passando
+npm run typecheck  # zero erros TypeScript
 ```
 
 ---
@@ -256,23 +309,10 @@ restartPolicyType = "ON_FAILURE"
 | Webhook vs Polling | Webhook | Railway é always-on; webhook é mais eficiente |
 | RLS | Desabilitado (service_role) | Segurança garantida via `WHERE user_id` nas queries |
 | Arredondamento | `ROUND(total/n, 2)` | Diferença de R$0,01 aceitável no MVP |
-
----
-
-## Ordem de Implementação
-
-1. Criar projeto no Railway + configurar variáveis de ambiente
-2. Criar projeto no Supabase (conta existente) + rodar migrations
-3. Scaffold TypeScript (package.json, tsconfig, estrutura de pastas)
-4. `src/db/client.ts` + `src/config/env.ts`
-5. Seed de categorias pré-definidas
-6. Auth middleware + `/start`
-7. Conversa de registro de gastos (`add-expense.conversation.ts`)
-8. Consulta mensal (`month.command.ts` + função SQL)
-9. Exclusão/cancelamento de gastos
-10. Deploy + webhook
+| Filtros mensais | Client-side sobre `getMonthlySummary` | Sem nova migration; dados já carregados |
+| Resumo anual | `Promise.all` de 12 chamadas mensais | Sem nova migration; reutiliza função SQL existente |
 
 ---
 
 *Criado em: 2026-02-27*
-*Status: Arquitetura definida — pronto para implementação*
+*Atualizado em: 2026-03-02 — novos comandos, filtros, padrão de callbacks, SessionData atualizado, seção de testes*
