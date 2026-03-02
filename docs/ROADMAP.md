@@ -17,7 +17,7 @@
 | 8 | Gerenciamento de categorias | ✅ Concluído | `feat/scaffold` |
 | 9 | Unit tests (Vitest) | ✅ Concluído | `feat/unit-tests` |
 | 10 | Melhorias de UX — lote 1 | ✅ Concluído | `feat/ux-improvements` |
-| 11 | Deploy no Railway + webhook | ⏳ Pendente | `feat/railway-deploy` |
+| 11 | Deploy no Railway + webhook | 🔄 Em andamento | `feat/railway-deploy` |
 
 **Legenda:** ✅ Concluído · 🔄 Em andamento · ⏳ Pendente · ❌ Bloqueado
 
