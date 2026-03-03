@@ -26,7 +26,7 @@ export async function addExpenseConversation(
   // PASSO 2: Forma de pagamento
   await ctx.reply('Forma de pagamento?', { reply_markup: paymentMethodKeyboard() })
   const payCtx = await conversation.waitForCallbackQuery(
-    ['pay:credit_card', 'pay:debit_card', 'pay:pix', 'pay:cash'],
+    ['pay:credit_card', 'pay:debit_card', 'pay:pix', 'pay:cash', 'pay:vr', 'pay:va'],
   )
   await payCtx.answerCallbackQuery()
   const paymentMethod = payCtx.callbackQuery.data.split(':')[1] as PaymentMethod

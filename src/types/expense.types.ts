@@ -1,12 +1,14 @@
 export type ChargeType = 'one_time' | 'installment' | 'recurring'
 
-export type PaymentMethod = 'credit_card' | 'debit_card' | 'pix' | 'cash'
+export type PaymentMethod = 'credit_card' | 'debit_card' | 'pix' | 'cash' | 'vr' | 'va'
 
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   credit_card: 'Cartão de crédito',
   debit_card:  'Cartão de débito',
   pix:         'PIX',
   cash:        'Dinheiro',
+  vr:          'Vale Refeição',
+  va:          'Vale Alimentação',
 }
 
 export const CHARGE_TYPE_LABEL: Record<ChargeType, string> = {
