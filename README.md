@@ -1,16 +1,38 @@
-# Nuxo-Bot
+# Nuxo-Bot 💸
 
-Bot de assessoria financeira pessoal via Telegram. Registre e consulte seus gastos de forma rápida, com suporte a parcelamentos, cobranças recorrentes e cobranças futuras.
+Assistente financeiro pessoal via Telegram. Registre gastos, acompanhe parcelamentos e cobranças recorrentes, filtre por categoria e visualize seu histórico mês a mês — tudo sem sair do chat.
+
+---
 
 ## Funcionalidades
 
-- **Registro de gastos** — valor, categoria, forma de pagamento, parcelamento e data de início
-- **Gastos parcelados** — cada parcela aparece no mês correto automaticamente
-- **Recorrências** — assinaturas e cobranças mensais sem data de fim
-- **Cobranças futuras** — registre hoje uma compra que começa a cobrar no próximo mês
-- **Consulta por mês** — navegue entre meses e filtre por categoria
-- **Cancelamento inteligente** — cancela recorrentes a partir de uma data, preservando o histórico
-- **Multi-usuário** — cada usuário vê apenas os próprios dados, identificado pelo Telegram ID
+### Registro de gastos
+Fluxo guiado passo a passo: valor → forma de pagamento → tipo → data → categoria → descrição. Parcelamento disponível apenas para cartão de crédito.
+
+### Tipos de cobrança
+| Tipo | Comportamento |
+|---|---|
+| **À vista** | Aparece no mês da data de início |
+| **Parcelado** | Cada parcela aparece no mês correto automaticamente |
+| **Recorrente** | Cobra todo mês até ser cancelado — histórico sempre preservado |
+
+### Consulta mensal (`/month`)
+- Navegação entre meses com botões ◀ ▶
+- Filtro por tipo de cobrança ou categoria
+- Botão **✏️ Gerenciar** para excluir ou cancelar qualquer item
+
+### Recorrentes ativos (`/recurring`)
+Lista todas as cobranças recorrentes ainda ativas, com opção de cancelar individualmente a partir de qualquer mês.
+
+### Resumo anual (`/year`)
+Total gasto por mês no ano atual, em uma única tela.
+
+### Outras
+- Multi-usuário — cada usuário vê apenas os próprios dados (identificado pelo Telegram ID)
+- Categorias pré-definidas + criação de categorias customizadas
+- Exclusão de parcelados com opção de preservar histórico anterior
+
+---
 
 ## Stack
 
@@ -21,13 +43,9 @@ Bot de assessoria financeira pessoal via Telegram. Registre e consulte seus gast
 | Banco de dados | [Supabase](https://supabase.com) (PostgreSQL) |
 | Sessão | @grammyjs/storage-supabase |
 | Deploy | [Railway](https://railway.app) |
+| Testes | [Vitest](https://vitest.dev) |
 
-## Pré-requisitos
-
-- Node.js 20+
-- Conta no [Supabase](https://supabase.com)
-- Bot criado no Telegram via [@BotFather](https://t.me/BotFather)
-- [ngrok](https://ngrok.com) para desenvolvimento local (webhook)
+---
 
 ## Setup local
 
@@ -46,42 +64,56 @@ cp .env.example .env
 
 **3. Rode em modo desenvolvimento:**
 ```bash
-# Em um terminal: exponha a porta com ngrok
-ngrok http 3000
-
-# Em outro terminal: suba o bot
 npm run dev
 ```
+
+Em desenvolvimento o bot usa **polling** — não precisa de URL pública nem ngrok.
+
+---
 
 ## Variáveis de ambiente
 
 | Variável | Descrição |
 |---|---|
 | `BOT_TOKEN` | Token do bot ([@BotFather](https://t.me/BotFather)) |
-| `WEBHOOK_DOMAIN` | URL pública (ex: `https://xxx.ngrok.io` em dev, URL do Railway em prod) |
 | `SUPABASE_URL` | URL do projeto Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave service role do Supabase |
-| `PORT` | Porta do servidor (padrão: 3000; Railway injeta automaticamente) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave service_role do Supabase |
+| `WEBHOOK_DOMAIN` | URL pública — só obrigatória em produção |
+| `NODE_ENV` | `development` (polling) ou `production` (webhook) |
 | `TZ` | Fuso horário — usar `America/Sao_Paulo` |
+
+---
+
+## Testes
+
+```bash
+npm test           # roda todos os testes
+npm run typecheck  # verifica tipagem TypeScript
+```
+
+72 testes cobrindo utils (datas, formatação, validação) e regras de negócio do service.
+
+---
 
 ## Fluxo de branches
 
 ```
-main        ← produção (Railway faz deploy automaticamente)
+main        ← produção (Railway redeploya automaticamente)
   └── develop ← integração
         ├── feat/* ← novas funcionalidades
         └── fix/*  ← correções
 ```
 
-- Nunca commite direto na `main`
-- Features e fixes são desenvolvidos em branches próprias e mergeados em `develop` via PR
-- Quando `develop` estiver estável, abre-se PR de `develop` → `main` para deploy
+---
 
 ## Documentação
 
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) — Requisitos e regras de negócio
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Arquitetura técnica e schema do banco
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — Plano de ação e progresso das tarefas
+- [`docs/DEPLOY.md`](docs/DEPLOY.md) — Guia completo de deploy no Railway
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — Plano de ação e progresso
+
+---
 
 ## Licença
 
