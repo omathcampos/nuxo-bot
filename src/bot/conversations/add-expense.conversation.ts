@@ -3,6 +3,7 @@ import { expenseTypeKeyboard } from '../keyboards/expense-type.keyboard'
 import { paymentMethodKeyboard } from '../keyboards/payment-method.keyboard'
 import { categoriesKeyboard } from '../keyboards/categories.keyboard'
 import { ExpenseService } from '../../services/expense.service'
+import { CategoryService } from '../../services/category.service'
 import { parseAmount } from '../../utils/format.utils'
 import { parseInstallments } from '../../utils/validation.utils'
 import { parseBillingDate, formatMonthYear } from '../../utils/date.utils'
@@ -76,9 +77,22 @@ export async function addExpenseConversation(
   let categoryId: number
 
   if (catData === 'cat:new') {
-    await ctx.conversation.enter('add-category')
-    await ctx.reply('Categoria criada! Reinicie o registro com /add.')
-    return
+    // Inline category creation (ctx.conversation.enter não funciona dentro de outra conversa)
+    await ctx.reply('Nome da nova categoria?')
+    const catNameCtx = await conversation.wait()
+    const catName = catNameCtx.message?.text?.trim()
+    if (!catName) {
+      await ctx.reply('Nome inválido. Use /add para tentar novamente.')
+      return
+    }
+    await ctx.reply('Emoji para a categoria? (ex: 🎯 — ou /skip para pular)')
+    const catIconCtx = await conversation.wait()
+    const catIcon = catIconCtx.message?.text === '/skip' ? undefined : catIconCtx.message?.text?.trim()
+    const newCategory = await conversation.external(() =>
+      CategoryService.create({ userId, name: catName, icon: catIcon }),
+    )
+    await ctx.reply(`Categoria criada! Continue o registro abaixo.`)
+    categoryId = newCategory.id
   } else {
     categoryId = parseInt(catData.split(':')[1])
   }
