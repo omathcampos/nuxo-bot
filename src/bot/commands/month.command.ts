@@ -55,6 +55,7 @@ export async function monthCommand(ctx: BotContext, year?: number, month?: numbe
   const hasItems = Object.keys(fullSummary.byCategory).length > 0
   if (hasItems) {
     kb.text('✏️ Gerenciar', `month:manage:${yearMonthStr}`)
+    kb.text('📊 Exportar', `month:export:${yearMonthStr}`)
   }
 
   if (filter) {
@@ -80,7 +81,7 @@ export async function monthCommand(ctx: BotContext, year?: number, month?: numbe
   await ctx.reply(lines.join('\n'), { parse_mode: 'Markdown', reply_markup: kb })
 }
 
-function applyFilter(
+export function applyFilter(
   summary: MonthlyExpenseSummary,
   filter?: { chargeType?: ChargeType; categoryName?: string },
 ): MonthlyExpenseSummary {
