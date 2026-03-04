@@ -7,6 +7,7 @@ import {
   monthFilterTypeCallback,
   monthFilterCatCallback,
   monthFilterClearCallback,
+  monthExportCallback,
 } from './month.callbacks'
 import {
   expenseDeleteCallback,
@@ -50,6 +51,9 @@ export function registerCallbacks(bot: Bot<BotContext>) {
 
   // Gerenciar gastos do mês
   bot.callbackQuery(/^month:manage:\d{4}-\d{2}$/, monthManageCallback)
+
+  // Exportar planilha
+  bot.callbackQuery(/^month:export:\d{4}-\d{2}$/, monthExportCallback)
 
   // Filtros mensais
   bot.callbackQuery(/^month:filter:\d{4}-\d{2}$/, monthFilterCallback)

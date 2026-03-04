@@ -1,9 +1,10 @@
-import { InlineKeyboard } from 'grammy'
+import { InlineKeyboard, InputFile } from 'grammy'
 import { BotContext } from '../../types/bot.types'
-import { monthCommand } from '../commands/month.command'
+import { monthCommand, applyFilter } from '../commands/month.command'
 import { ExpenseService } from '../../services/expense.service'
 import { formatBRL } from '../../utils/format.utils'
 import { ChargeType } from '../../types/expense.types'
+import { generateExpenseXlsx } from '../../utils/export.utils'
 
 // Callback: month:nav:2025-04
 export async function monthNavCallback(ctx: BotContext) {
@@ -107,6 +108,21 @@ export async function monthFilterCatCallback(ctx: BotContext) {
   ctx.session._monthFilter = { categoryName }
   await ctx.editMessageText('Carregando...')
   await monthCommand(ctx, year, month)
+}
+
+// Callback: month:export:2025-03
+export async function monthExportCallback(ctx: BotContext) {
+  await ctx.answerCallbackQuery()
+  const data = ctx.callbackQuery?.data ?? ''
+  const [, , yearMonth] = data.split(':')
+  const [year, month] = yearMonth.split('-').map(Number)
+  const userId = ctx.session.dbUserId!
+
+  const fullSummary = await ExpenseService.getMonthlySummary(userId, year, month)
+  const summary = applyFilter(fullSummary, ctx.session._monthFilter)
+
+  const { buffer, filename } = await generateExpenseXlsx(summary, { year, month })
+  await ctx.replyWithDocument(new InputFile(buffer, filename))
 }
 
 // Callback: month:fclear:2025-03
